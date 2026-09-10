@@ -1,0 +1,199 @@
+BANK MARKETING - SQL QUERIES FOR GITHUB PORTFOLIO
+=================================================
+
+-- 01. Total records
+SELECT COUNT(*) AS total_records
+FROM bank_marketing;
+
+
+-- 02. Target distribution
+SELECT
+    y AS subscription_status,
+    COUNT(*) AS customers,
+    ROUND(
+        COUNT(*) * 100.0 /
+        SUM(COUNT(*)) OVER (),
+        2
+    ) AS percentage
+FROM bank_marketing
+GROUP BY y;
+
+
+-- 03. Overall conversion rate
+SELECT
+    ROUND(
+        SUM(CASE WHEN y = 'yes' THEN 1 ELSE 0 END) * 100.0
+        / COUNT(*),
+        2
+    ) AS conversion_rate
+FROM bank_marketing;
+
+
+-- 04. Conversion by contact type
+SELECT
+    contact,
+    COUNT(*) AS contacts,
+    SUM(CASE WHEN y = 'yes' THEN 1 ELSE 0 END) AS subscribers,
+    ROUND(
+        SUM(CASE WHEN y = 'yes' THEN 1 ELSE 0 END) * 100.0
+        / COUNT(*),
+        2
+    ) AS conversion_rate
+FROM bank_marketing
+GROUP BY contact
+ORDER BY conversion_rate DESC;
+
+
+-- 05. Conversion by previous outcome
+SELECT
+    poutcome,
+    COUNT(*) AS customers,
+    SUM(CASE WHEN y = 'yes' THEN 1 ELSE 0 END) AS subscribers,
+    ROUND(
+        SUM(CASE WHEN y = 'yes' THEN 1 ELSE 0 END) * 100.0
+        / COUNT(*),
+        2
+    ) AS conversion_rate
+FROM bank_marketing
+GROUP BY poutcome
+ORDER BY conversion_rate DESC;
+
+
+-- 06. Average duration by outcome
+SELECT
+    y,
+    ROUND(AVG(duration),2) AS avg_duration_seconds
+FROM bank_marketing
+GROUP BY y;
+
+
+-- 07. Conversion by month
+SELECT
+    month,
+    COUNT(*) AS contacts,
+    SUM(CASE WHEN y = 'yes' THEN 1 ELSE 0 END) AS subscribers,
+    ROUND(
+        SUM(CASE WHEN y = 'yes' THEN 1 ELSE 0 END) * 100.0
+        / COUNT(*),
+        2
+    ) AS conversion_rate
+FROM bank_marketing
+GROUP BY month
+ORDER BY conversion_rate DESC;
+
+
+-- 08. Subscribers by occupation
+SELECT
+    job,
+    SUM(
+        CASE
+            WHEN y = 'yes' THEN 1
+            ELSE 0
+        END
+    ) AS subscribers
+FROM bank_marketing
+GROUP BY job
+ORDER BY subscribers DESC;
+
+
+-- 09. Conversion by occupation
+SELECT
+    job,
+    COUNT(*) AS contacts,
+    SUM(CASE WHEN y='yes' THEN 1 ELSE 0 END) AS subscribers,
+    ROUND(
+        SUM(CASE WHEN y='yes' THEN 1 ELSE 0 END)*100.0
+        / COUNT(*),
+        2
+    ) AS conversion_rate
+FROM bank_marketing
+GROUP BY job
+ORDER BY conversion_rate DESC;
+
+
+-- 10. Conversion by age group
+SELECT
+    CASE
+        WHEN age < 25 THEN 'Under 25'
+        WHEN age < 35 THEN '25-34'
+        WHEN age < 45 THEN '35-44'
+        WHEN age < 60 THEN '45-59'
+        ELSE '60+'
+    END AS age_group,
+    COUNT(*) AS customers,
+    SUM(CASE WHEN y='yes' THEN 1 ELSE 0 END) AS subscribers,
+    ROUND(
+        SUM(CASE WHEN y='yes' THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+        2
+    ) AS conversion_rate
+FROM bank_marketing
+GROUP BY age_group
+ORDER BY conversion_rate DESC;
+
+
+-- 11. Conversion by education
+SELECT
+    education,
+    COUNT(*) AS customers,
+    SUM(CASE WHEN y='yes' THEN 1 ELSE 0 END) AS subscribers,
+    ROUND(
+        SUM(CASE WHEN y='yes' THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+        2
+    ) AS conversion_rate
+FROM bank_marketing
+GROUP BY education
+ORDER BY conversion_rate DESC;
+
+
+-- 12. Conversion by contact count band
+SELECT
+    CASE
+        WHEN campaign = 1 THEN '1 contact'
+        WHEN campaign <= 3 THEN '2-3 contacts'
+        WHEN campaign <= 5 THEN '4-5 contacts'
+        ELSE '6+ contacts'
+    END AS contact_band,
+    COUNT(*) AS customers,
+    SUM(CASE WHEN y='yes' THEN 1 ELSE 0 END) AS subscribers,
+    ROUND(
+        SUM(CASE WHEN y='yes' THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+        2
+    ) AS conversion_rate
+FROM bank_marketing
+GROUP BY contact_band
+ORDER BY conversion_rate DESC;
+
+
+-- 13. Previously contacted vs not contacted
+SELECT
+    CASE
+        WHEN pdays = -1 THEN 'Not Previously Contacted'
+        ELSE 'Previously Contacted'
+    END AS client_group,
+    COUNT(*) AS customers,
+    SUM(CASE WHEN y='yes' THEN 1 ELSE 0 END) AS subscribers,
+    ROUND(
+        SUM(CASE WHEN y='yes' THEN 1 ELSE 0 END) * 100.0 / COUNT(*),
+        2
+    ) AS conversion_rate
+FROM bank_marketing
+GROUP BY client_group;
+
+
+-- 14. Top insights query
+WITH conversion AS
+(
+    SELECT
+        poutcome,
+        ROUND(
+            SUM(CASE WHEN y='yes' THEN 1 ELSE 0 END) * 100.0 /
+            COUNT(*),
+            2
+        ) AS conversion_rate
+    FROM bank_marketing
+    GROUP BY poutcome
+)
+SELECT *
+FROM conversion
+ORDER BY conversion_rate DESC
+LIMIT 3;
